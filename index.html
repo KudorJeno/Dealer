@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -8,7 +9,13 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Dealer Tracker</title>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     :root {
       --accent: #e94560;
@@ -24,7 +31,8 @@
       --overall-bg: #0d1624;
     }
 
-    html, body {
+    html,
+    body {
       height: 100%;
     }
 
@@ -40,7 +48,8 @@
       /* prevent rubber-band scroll pulling content out of view on iOS */
       overscroll-behavior: none;
       -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation; /* disables double-tap-to-zoom on the whole page */
+      touch-action: manipulation;
+      /* disables double-tap-to-zoom on the whole page */
     }
 
     .screen {
@@ -57,7 +66,10 @@
       padding-left: max(clamp(20px, 5vw, 32px), env(safe-area-inset-left));
       padding-right: max(clamp(20px, 5vw, 32px), env(safe-area-inset-right));
     }
-    .screen.active { display: flex; }
+
+    .screen.active {
+      display: flex;
+    }
 
     h1 {
       font-size: clamp(1.6rem, 5vw, 2rem);
@@ -96,11 +108,13 @@
       min-width: 44px;
       min-height: 44px;
     }
+
     /* active state covers both mouse-click and finger-tap */
     .count-btn:active {
       border-color: var(--accent);
       background: var(--card-active);
     }
+
     @media (hover: hover) {
       .count-btn:hover {
         border-color: var(--accent);
@@ -129,8 +143,14 @@
       /* prevent iOS auto-zoom (requires font-size >= 16px equivalent) */
       -webkit-text-size-adjust: 100%;
     }
-    .name-inputs input:focus { border-color: var(--accent); }
-    .name-inputs input::placeholder { color: #555; }
+
+    .name-inputs input:focus {
+      border-color: var(--accent);
+    }
+
+    .name-inputs input::placeholder {
+      color: #555;
+    }
 
     /* ── Primary action button ── */
     .btn {
@@ -149,12 +169,23 @@
       touch-action: manipulation;
       transition: background 0.15s;
       width: 100%;
-      min-height: 56px; /* comfortably tappable */
+      min-height: 56px;
+      /* comfortably tappable */
       letter-spacing: 0.02em;
     }
-    .btn:active { background: var(--accent-dark); }
+
+    .btn:active {
+      background: var(--accent-dark);
+    }
+
+    .right-arrow {
+      padding-bottom: 5px;
+    }
+
     @media (hover: hover) {
-      .btn:hover { background: var(--accent-dark); }
+      .btn:hover {
+        background: var(--accent-dark);
+      }
     }
 
     /* ── Dealer screen ── */
@@ -217,7 +248,10 @@
       color: #fff;
       font-weight: 700;
     }
-    .player-item.active .badge { visibility: visible; }
+
+    .player-item.active .badge {
+      visibility: visible;
+    }
 
     /* ── Score inputs ── */
     .score-input {
@@ -228,7 +262,8 @@
       border: 2px solid var(--border);
       background: var(--bg);
       color: #fff;
-      font-size: 16px; /* ≥16px prevents iOS auto-zoom */
+      font-size: 16px;
+      /* ≥16px prevents iOS auto-zoom */
       font-weight: 600;
       text-align: center;
       outline: none;
@@ -236,17 +271,35 @@
       /* hide spin arrows */
       -moz-appearance: textfield;
     }
+
     .score-input::-webkit-outer-spin-button,
-    .score-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-    .score-input:focus { border-color: var(--accent); }
-    .player-item.active .score-input:not(.overall) { border-color: #c73652; background: #12192e; }
+    .score-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .score-input:focus {
+      border-color: var(--accent);
+    }
+
+    .player-item.active .score-input:not(.overall) {
+      border-color: #c73652;
+      background: #12192e;
+    }
 
     .score-input.overall {
       border-color: var(--overall-border);
       background: var(--overall-bg);
     }
-    .score-input.overall:focus { border-color: var(--overall); }
-    .player-item.active .score-input.overall { border-color: #1a4a8a; background: #09111e; }
+
+    .score-input.overall:focus {
+      border-color: var(--overall);
+    }
+
+    .player-item.active .score-input.overall {
+      border-color: #1a4a8a;
+      background: #09111e;
+    }
 
     /* ── Score column headers ── */
     .score-col-header {
@@ -256,8 +309,15 @@
       width: 100%;
       padding: 0 clamp(16px, 4vw, 22px);
     }
-    .score-col-header .sch-spacer { flex: 1; }
-    .score-col-header .sch-badge { flex-shrink: 0; }
+
+    .score-col-header .sch-spacer {
+      flex: 1;
+    }
+
+    .score-col-header .sch-badge {
+      flex-shrink: 0;
+    }
+
     .score-col-header .sch-label {
       width: clamp(60px, 14vw, 76px);
       flex-shrink: 0;
@@ -268,7 +328,10 @@
       text-transform: uppercase;
       color: var(--muted);
     }
-    .score-col-header .sch-label.overall { color: var(--overall); }
+
+    .score-col-header .sch-label.overall {
+      color: var(--overall);
+    }
 
     /* ── Drag handle ── */
     .drag-handle {
@@ -283,32 +346,66 @@
       touch-action: none;
       line-height: 1;
     }
-    .drag-handle:active { cursor: grabbing; }
 
-    .player-item.dragging { opacity: 0.35; }
+    .drag-handle:active {
+      cursor: grabbing;
+    }
+
+    .player-item.dragging {
+      opacity: 0.35;
+    }
+
     .player-item.drag-over {
       border-color: var(--accent) !important;
       background: var(--card-active) !important;
     }
 
-    .score-col-header .sch-handle-spacer { width: 20px; flex-shrink: 0; }
+    .score-col-header .sch-handle-spacer {
+      width: 20px;
+      flex-shrink: 0;
+    }
 
     /* ── Tablet / large phone tweaks ── */
     @media (min-width: 600px) {
-      .screen { gap: 32px; }
+      .screen {
+        gap: 32px;
+      }
     }
 
     /* ── Landscape phone: shrink vertical gaps so everything fits ── */
     @media (max-height: 500px) and (orientation: landscape) {
-      .screen { gap: 12px; padding-top: 16px; padding-bottom: 16px; }
-      h1 { font-size: 1.3rem; }
-      .count-btn { width: 64px; height: 64px; font-size: 1.5rem; }
-      .player-item { padding: 8px 14px; }
-      .score-input { padding: 6px 8px; }
-      .btn { min-height: 48px; padding: 10px 24px; }
+      .screen {
+        gap: 12px;
+        padding-top: 16px;
+        padding-bottom: 16px;
+      }
+
+      h1 {
+        font-size: 1.3rem;
+      }
+
+      .count-btn {
+        width: 64px;
+        height: 64px;
+        font-size: 1.5rem;
+      }
+
+      .player-item {
+        padding: 8px 14px;
+      }
+
+      .score-input {
+        padding: 6px 8px;
+      }
+
+      .btn {
+        min-height: 48px;
+        padding: 10px 24px;
+      }
     }
   </style>
 </head>
+
 <body>
 
   <!-- Screen 1: How many players? -->
@@ -336,7 +433,10 @@
     <span class="dealer-label">Players</span>
     <div class="score-col-header" id="score-col-header"></div>
     <div class="player-list" id="player-list"></div>
-    <button class="btn" onclick="nextDealer()">Next Dealer &rarr;</button>
+    <button class="btn" onclick="nextDealer()">
+      <span>Next Dealer</span>
+      <span class="right-arrow">&rarr;</span>
+    </button>
   </div>
 
   <script>
@@ -550,4 +650,5 @@
     }
   </script>
 </body>
+
 </html>
