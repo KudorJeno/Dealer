@@ -19,6 +19,9 @@
       --text: #e0e0e0;
       --muted: #888;
       --border: #333;
+      --overall: #4a90d9;
+      --overall-border: #1a3a6a;
+      --overall-bg: #0d1624;
     }
 
     html, body {
@@ -131,6 +134,10 @@
 
     /* ── Primary action button ── */
     .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
       padding: clamp(14px, 3.5vw, 18px) 32px;
       border-radius: 14px;
       border: none;
@@ -189,14 +196,17 @@
     }
 
     .player-item .badge {
-      display: none;
+      visibility: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 0.65rem;
       font-weight: 800;
       letter-spacing: 0.1em;
       text-transform: uppercase;
       background: var(--accent);
       color: #fff;
-      padding: 4px 9px;
+      padding: 4px 10px;
       border-radius: 6px;
       flex-shrink: 0;
     }
@@ -207,13 +217,13 @@
       color: #fff;
       font-weight: 700;
     }
-    .player-item.active .badge { display: inline-block; }
+    .player-item.active .badge { visibility: visible; }
 
-    /* ── Score input ── */
+    /* ── Score inputs ── */
     .score-input {
-      width: clamp(64px, 16vw, 80px);
+      width: clamp(60px, 14vw, 76px);
       flex-shrink: 0;
-      padding: 8px 10px;
+      padding: 8px 6px;
       border-radius: 10px;
       border: 2px solid var(--border);
       background: var(--bg);
@@ -229,7 +239,59 @@
     .score-input::-webkit-outer-spin-button,
     .score-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     .score-input:focus { border-color: var(--accent); }
-    .player-item.active .score-input { border-color: #c73652; background: #12192e; }
+    .player-item.active .score-input:not(.overall) { border-color: #c73652; background: #12192e; }
+
+    .score-input.overall {
+      border-color: var(--overall-border);
+      background: var(--overall-bg);
+    }
+    .score-input.overall:focus { border-color: var(--overall); }
+    .player-item.active .score-input.overall { border-color: #1a4a8a; background: #09111e; }
+
+    /* ── Score column headers ── */
+    .score-col-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 0 clamp(16px, 4vw, 22px);
+    }
+    .score-col-header .sch-spacer { flex: 1; }
+    .score-col-header .sch-badge { flex-shrink: 0; }
+    .score-col-header .sch-label {
+      width: clamp(60px, 14vw, 76px);
+      flex-shrink: 0;
+      text-align: center;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .score-col-header .sch-label.overall { color: var(--overall); }
+
+    /* ── Drag handle ── */
+    .drag-handle {
+      cursor: grab;
+      color: var(--muted);
+      font-size: 1.1rem;
+      width: 20px;
+      text-align: center;
+      flex-shrink: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+      line-height: 1;
+    }
+    .drag-handle:active { cursor: grabbing; }
+
+    .player-item.dragging { opacity: 0.35; }
+    .player-item.drag-over {
+      border-color: var(--accent) !important;
+      background: var(--card-active) !important;
+    }
+
+    .score-col-header .sch-handle-spacer { width: 20px; flex-shrink: 0; }
 
     /* ── Tablet / large phone tweaks ── */
     @media (min-width: 600px) {
@@ -272,20 +334,22 @@
   <div class="screen" id="screen-dealer">
     <h1>Next Dealer</h1>
     <span class="dealer-label">Players</span>
+    <div class="score-col-header" id="score-col-header"></div>
     <div class="player-list" id="player-list"></div>
-    <button class="btn" onclick="nextDealer()">Next Dealer &rarr;</button>
+    <button class="btn" onclick="nextDealer()"><span>Next Dealer</span> <span>&rarr;</span></button>
   </div>
 
   <script>
     let playerCount = 0;
     let players = [];
     let scores = [];
+    let overallScores = [];
     let dealerIndex = 0;
+    let dragSrcIndex = null;
 
     function show(id) {
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       document.getElementById(id).classList.add('active');
-      // scroll to top so nothing is hidden behind a soft keyboard on re-entry
       window.scrollTo(0, 0);
     }
 
@@ -296,11 +360,9 @@
       for (let i = 0; i < n; i++) {
         const input = document.createElement('input');
         input.type = 'text';
-        // font-size 16px or above prevents iOS auto-zoom on focus
         input.style.fontSize = '16px';
         input.placeholder = `Player ${i + 1}`;
         input.id = `name-${i}`;
-        // allow moving to the next field with the keyboard "Next" button on mobile
         input.setAttribute('enterkeyhint', i < n - 1 ? 'next' : 'done');
         input.addEventListener('keydown', e => {
           if (e.key === 'Enter') {
@@ -312,42 +374,143 @@
         container.appendChild(input);
       }
       show('screen-names');
-      // slight delay so the transition completes before the keyboard opens
       setTimeout(() => document.getElementById('name-0').focus(), 50);
     }
 
     function startGame() {
-      // dismiss soft keyboard before switching screen
       document.activeElement && document.activeElement.blur();
-
       players = [];
       scores = [];
+      overallScores = [];
       for (let i = 0; i < playerCount; i++) {
         const val = document.getElementById(`name-${i}`).value.trim();
         players.push(val || `Player ${i + 1}`);
         scores.push('');
+        overallScores.push('');
       }
       dealerIndex = 0;
       renderDealer();
       show('screen-dealer');
     }
 
+    function flushScores() {
+      document.querySelectorAll('.score-input').forEach(inp => {
+        const idx = parseInt(inp.dataset.index, 10);
+        if (inp.classList.contains('overall')) overallScores[idx] = inp.value;
+        else scores[idx] = inp.value;
+      });
+    }
+
+    function reorderPlayers(from, to) {
+      if (from === to) return;
+      flushScores();
+      function move(arr) { const [x] = arr.splice(from, 1); arr.splice(to, 0, x); }
+      move(players); move(scores); move(overallScores);
+      if (dealerIndex === from) dealerIndex = to;
+      else if (from < to && dealerIndex > from && dealerIndex <= to) dealerIndex--;
+      else if (from > to && dealerIndex >= to && dealerIndex < from) dealerIndex++;
+      renderList();
+    }
+
     function renderDealer() {
-      // preserve any score values already typed before re-rendering
-      document.querySelectorAll('.score-input').forEach(input => {
-        const idx = parseInt(input.dataset.index, 10);
-        scores[idx] = input.value;
+      flushScores();
+      renderList();
+    }
+
+    function renderList() {
+      const draggable = players.length > 2;
+
+      // Rebuild column header to match the player row layout
+      const header = document.getElementById('score-col-header');
+      header.innerHTML = '';
+      if (draggable) {
+        const hs = document.createElement('span');
+        hs.className = 'sch-handle-spacer';
+        header.appendChild(hs);
+      }
+      [['sch-spacer', ''], ['sch-badge', ''], ['sch-label', 'Round'], ['sch-label overall', 'Total']].forEach(([cls, text]) => {
+        const s = document.createElement('span');
+        s.className = cls;
+        s.textContent = text;
+        header.appendChild(s);
       });
 
       const list = document.getElementById('player-list');
       list.innerHTML = '';
+
       players.forEach((name, i) => {
         const item = document.createElement('div');
         item.className = 'player-item' + (i === dealerIndex ? ' active' : '');
+        item.dataset.playerIndex = i;
+
+        if (draggable) {
+          // Desktop: this item is a drop target
+          item.addEventListener('dragover', e => {
+            e.preventDefault();
+            if (dragSrcIndex !== null && dragSrcIndex !== i) {
+              document.querySelectorAll('.player-item').forEach(el => el.classList.remove('drag-over'));
+              item.classList.add('drag-over');
+            }
+          });
+          item.addEventListener('dragleave', e => {
+            if (!item.contains(e.relatedTarget)) item.classList.remove('drag-over');
+          });
+          item.addEventListener('drop', e => {
+            e.preventDefault();
+            if (dragSrcIndex !== null && dragSrcIndex !== i) reorderPlayers(dragSrcIndex, i);
+          });
+
+          // Drag handle — drag is initiated only from here
+          const handle = document.createElement('span');
+          handle.className = 'drag-handle';
+          handle.setAttribute('draggable', 'true');
+          handle.setAttribute('aria-hidden', 'true');
+          handle.textContent = '⠿';
+
+          // Desktop DnD
+          handle.addEventListener('dragstart', e => {
+            dragSrcIndex = i;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setDragImage(item, 24, item.offsetHeight / 2);
+            setTimeout(() => item.classList.add('dragging'), 0);
+          });
+          handle.addEventListener('dragend', () => {
+            item.classList.remove('dragging');
+            document.querySelectorAll('.player-item').forEach(el => el.classList.remove('drag-over'));
+            dragSrcIndex = null;
+          });
+
+          // Touch DnD
+          let touchTarget = null;
+          handle.addEventListener('touchstart', () => {
+            dragSrcIndex = i;
+            touchTarget = null;
+            item.classList.add('dragging');
+          }, { passive: true });
+          handle.addEventListener('touchmove', e => {
+            e.preventDefault();
+            const t = e.touches[0];
+            const over = document.elementsFromPoint(t.clientX, t.clientY)
+              .find(el => el.classList.contains('player-item') && el !== item);
+            document.querySelectorAll('.player-item').forEach(el => el.classList.remove('drag-over'));
+            touchTarget = over || null;
+            if (touchTarget) touchTarget.classList.add('drag-over');
+          }, { passive: false });
+          handle.addEventListener('touchend', () => {
+            item.classList.remove('dragging');
+            document.querySelectorAll('.player-item').forEach(el => el.classList.remove('drag-over'));
+            const target = touchTarget;
+            touchTarget = null;
+            dragSrcIndex = null;
+            if (target) reorderPlayers(i, parseInt(target.dataset.playerIndex, 10));
+          });
+
+          item.appendChild(handle);
+        }
 
         const nameSpan = document.createElement('span');
         nameSpan.className = 'player-name';
-        nameSpan.textContent = name; // textContent is XSS-safe
+        nameSpan.textContent = name;
 
         const badge = document.createElement('span');
         badge.className = 'badge';
@@ -361,11 +524,22 @@
         scoreInput.inputMode = 'numeric';
         scoreInput.setAttribute('enterkeyhint', 'done');
         if (scores[i] !== '') scoreInput.value = scores[i];
-        scoreInput.addEventListener('change', () => { scores[i] = scoreInput.value; });
+        scoreInput.addEventListener('input', () => { scores[i] = scoreInput.value; });
+
+        const overallInput = document.createElement('input');
+        overallInput.type = 'number';
+        overallInput.className = 'score-input overall';
+        overallInput.dataset.index = i;
+        overallInput.placeholder = '0';
+        overallInput.inputMode = 'numeric';
+        overallInput.setAttribute('enterkeyhint', 'done');
+        if (overallScores[i] !== '') overallInput.value = overallScores[i];
+        overallInput.addEventListener('input', () => { overallScores[i] = overallInput.value; });
 
         item.appendChild(nameSpan);
         item.appendChild(badge);
         item.appendChild(scoreInput);
+        item.appendChild(overallInput);
         list.appendChild(item);
       });
     }
